@@ -1,0 +1,7 @@
+<resources>
+    <color name="elder_bg">#F7F4ED</color>
+    <color name="elder_text">#1F2933</color>
+    <color name="elder_primary">#006D77</color>
+    <color name="elder_primary_dark">#004E56</color>
+    <color name="elder_card">#FFFFFF</color>
+</resources>
