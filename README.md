@@ -6,10 +6,20 @@ A simple Android app concept for elderly users who need calm, step-by-step help 
 
 - Shows very large text and touch targets.
 - Lets the user choose Rapido, Ola, or Uber.
-- Gives one booking instruction at a time.
+- Gives app-specific booking instructions one step at a time.
+- Shows simple screenshot-style guide pictures for each step.
 - Opens the selected ride app if it is installed.
 - Falls back to Play Store if the ride app is missing.
-- Includes an emergency help button for `112`.
+- Lets the user add family emergency numbers.
+- Opens the phone dialer for `112` or saved family contacts.
+
+## Elder-Friendly Design Choices
+
+- No login, menus, or small icons inside this guidance app.
+- Big buttons and high-contrast text.
+- One active step is shown clearly, with the next action emphasized.
+- Emergency calls open in the dialer so the user confirms before calling.
+- The guide pictures are simplified mock screens, not exact third-party app screenshots, so they stay useful even when ride apps change their UI.
 
 ## Open In Android Studio
 

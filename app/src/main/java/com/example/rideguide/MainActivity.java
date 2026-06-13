@@ -3,6 +3,7 @@ package com.example.rideguide;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -10,37 +11,68 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity {
     private static final String HELP_NUMBER = "112";
+    private static final String PREFS_NAME = "ride_guide_contacts";
+    private static final String KEY_EMERGENCY_NUMBERS = "emergency_numbers";
 
     private final List<Button> providerButtons = new ArrayList<>();
-    private final List<Step> steps = new ArrayList<>();
+    private final List<String> emergencyNumbers = new ArrayList<>();
     private LinearLayout stepsLayout;
+    private LinearLayout emergencyLayout;
     private TextView title;
+    private EditText emergencyInput;
     private int selectedProvider = 0;
     private int currentStep = 0;
 
     private final Provider[] providers = new Provider[] {
-            new Provider("Rapido", "com.rapido.passenger", "rapido://home", "https://play.google.com/store/apps/details?id=com.rapido.passenger"),
-            new Provider("Ola", "com.olacabs.customer", "olacabs://app", "https://play.google.com/store/apps/details?id=com.olacabs.customer"),
-            new Provider("Uber", "com.ubercab", "uber://", "https://play.google.com/store/apps/details?id=com.ubercab")
+            new Provider("Rapido", "com.rapido.passenger", "rapido://home", "https://play.google.com/store/apps/details?id=com.rapido.passenger", new Step[] {
+                    new Step("Open Rapido", "Tap Open Selected App. Wait for the Rapido home screen.", "Home screen", "Search location", "Ride options below"),
+                    new Step("Check pickup", "Make sure the pickup point is your current place. If it is wrong, tap pickup and type the correct place.", "Pickup box", "Current location", "Change if wrong"),
+                    new Step("Enter destination", "Tap the destination box. Type the place name slowly and choose the correct result.", "Where to?", "Type destination", "Pick from list"),
+                    new Step("Choose Auto or Cab", "Select Auto for short trips. Choose Cab if you need more comfort.", "Ride choice", "Auto / Cab", "Fare shown here"),
+                    new Step("Confirm ride", "Check fare and pickup again. Tap Book only when both are correct.", "Confirm screen", "Book ride", "Check fare first"),
+                    new Step("Share details", "Read the vehicle number, driver name, and OTP. Share them with a family member.", "Driver details", "Vehicle number", "OTP"),
+                    new Step("Start safely", "Sit only in the matching vehicle. Tell the OTP after sitting inside.", "Vehicle arrives", "Match number", "Then share OTP")
+            }),
+            new Provider("Ola", "com.olacabs.customer", "olacabs://app", "https://play.google.com/store/apps/details?id=com.olacabs.customer", new Step[] {
+                    new Step("Open Ola", "Tap Open Selected App. Wait for Ola to show the booking screen.", "Ola home", "Pickup shown", "Destination box"),
+                    new Step("Check pickup", "Confirm the pickup address. If the marker is wrong, tap pickup and correct it.", "Pickup", "Your location", "Edit if needed"),
+                    new Step("Add destination", "Tap destination. Type the address or landmark, then choose the right result.", "Drop location", "Search place", "Select result"),
+                    new Step("Select ride", "Choose Auto, Mini, Prime, or another simple option. Check the fare before booking.", "Ride list", "Auto / Cab", "Fare shown"),
+                    new Step("Book the ride", "Tap Book after checking pickup, destination, and fare.", "Book screen", "Confirm booking", "Payment mode"),
+                    new Step("Check driver", "Look for driver name, vehicle number, and OTP. Share them with family.", "Driver card", "Vehicle number", "OTP"),
+                    new Step("Ride safely", "Match the vehicle number before entering. Give OTP only to the correct driver.", "Arrived", "Check vehicle", "Share OTP")
+            }),
+            new Provider("Uber", "com.ubercab", "uber://", "https://play.google.com/store/apps/details?id=com.ubercab", new Step[] {
+                    new Step("Open Uber", "Tap Open Selected App. Wait for Uber to show the map and destination search.", "Uber home", "Where to?", "Map behind"),
+                    new Step("Enter destination", "Tap Where to? Type your destination and choose the correct place.", "Search", "Where to?", "Choose result"),
+                    new Step("Check pickup", "Check the pickup point on the map. Tap it if the location is wrong.", "Pickup pin", "Current place", "Change pickup"),
+                    new Step("Choose ride", "Pick Auto, Uber Go, or the option with the fare you are comfortable with.", "Choose ride", "Auto / Go", "Fare"),
+                    new Step("Confirm", "Check the fare and payment method. Tap Confirm only when everything is correct.", "Confirm screen", "Confirm ride", "Payment"),
+                    new Step("Read driver details", "Note driver name, vehicle number, and pickup point. Share them with family.", "Driver details", "Vehicle number", "Driver name"),
+                    new Step("Start safely", "Match the vehicle number before entering. Keep the phone with you during the ride.", "Vehicle arrives", "Match number", "Stay alert")
+            })
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        buildSteps();
+        loadEmergencyNumbers();
         setContentView(buildScreen());
         renderProviderButtons();
         renderSteps();
+        renderEmergencyNumbers();
     }
 
     private View buildScreen() {
@@ -96,21 +128,12 @@ public class MainActivity extends Activity {
         openApp.setOnClickListener(v -> openSelectedProvider());
         actionRow.addView(openApp, matchWrap(0, 0, 0, 10));
 
-        Button callHelp = secondaryButton("Call Emergency Help");
-        callHelp.setOnClickListener(v -> callHelpNumber());
-        actionRow.addView(callHelp, matchWrap(0, 0, 0, 0));
+        emergencyLayout = new LinearLayout(this);
+        emergencyLayout.setOrientation(LinearLayout.VERTICAL);
+        emergencyLayout.setPadding(0, dp(18), 0, 0);
+        root.addView(emergencyLayout);
 
         return scrollView;
-    }
-
-    private void buildSteps() {
-        steps.add(new Step("Open the app", "Tap the button below. If the app is not installed, ask a family member to install it from Play Store."));
-        steps.add(new Step("Set pickup location", "Check that the pickup address is your current place. If it is wrong, tap pickup and type the correct place."));
-        steps.add(new Step("Enter destination", "Tap destination. Type where you want to go, then choose the correct place from the list."));
-        steps.add(new Step("Choose ride type", "Pick Auto for short trips, or Cab for more comfort. Look at the fare before continuing."));
-        steps.add(new Step("Confirm booking", "Tap Book or Confirm. Do not pay extra cash unless the app says cash payment is selected."));
-        steps.add(new Step("Check driver details", "Read the vehicle number, driver name, and OTP. Share these with a family member before sitting in the vehicle."));
-        steps.add(new Step("Start the ride safely", "Match the vehicle number. Tell the driver the OTP only after you sit inside the correct vehicle."));
     }
 
     private void renderProviderButtons() {
@@ -127,13 +150,14 @@ public class MainActivity extends Activity {
 
     private void renderSteps() {
         stepsLayout.removeAllViews();
+        Step[] selectedSteps = providers[selectedProvider].steps;
 
-        TextView progress = text("Step " + (currentStep + 1) + " of " + steps.size(), 22, true);
+        TextView progress = text("Step " + (currentStep + 1) + " of " + selectedSteps.length, 22, true);
         progress.setTextColor(Color.parseColor("#006D77"));
         progress.setPadding(0, 0, 0, dp(10));
         stepsLayout.addView(progress);
 
-        for (int i = 0; i < steps.size(); i++) {
+        for (int i = 0; i < selectedSteps.length; i++) {
             stepsLayout.addView(stepCard(i), matchWrap(0, 0, 0, 10));
         }
 
@@ -154,9 +178,9 @@ public class MainActivity extends Activity {
         });
         nav.addView(previous, weightWrap(1, 0, 0, 8, 0));
 
-        Button next = primaryButton(currentStep == steps.size() - 1 ? "Done" : "Next");
+        Button next = primaryButton(currentStep == selectedSteps.length - 1 ? "Done" : "Next");
         next.setOnClickListener(v -> {
-            if (currentStep < steps.size() - 1) {
+            if (currentStep < providers[selectedProvider].steps.length - 1) {
                 currentStep++;
                 renderSteps();
             } else {
@@ -167,7 +191,7 @@ public class MainActivity extends Activity {
     }
 
     private View stepCard(int index) {
-        Step step = steps.get(index);
+        Step step = providers[selectedProvider].steps[index];
         boolean active = index == currentStep;
 
         LinearLayout card = new LinearLayout(this);
@@ -189,7 +213,110 @@ public class MainActivity extends Activity {
         detail.setPadding(0, dp(8), 0, 0);
         card.addView(detail);
 
+        if (active) {
+            card.addView(mockScreenshot(step), matchWrap(0, 12, 0, 0));
+        }
+
         return card;
+    }
+
+    private View mockScreenshot(Step step) {
+        LinearLayout phone = new LinearLayout(this);
+        phone.setOrientation(LinearLayout.VERTICAL);
+        phone.setPadding(dp(14), dp(12), dp(14), dp(12));
+        phone.setBackgroundResource(R.drawable.phone_mock_bg);
+
+        TextView top = text(providers[selectedProvider].name + " guide picture", 16, true);
+        top.setTextColor(Color.parseColor("#1F2933"));
+        top.setGravity(Gravity.CENTER);
+        phone.addView(top, matchWrap(0, 0, 0, 10));
+
+        phone.addView(mockRow(step.screenTitle, "#EAF7F5", true));
+        phone.addView(mockRow(step.primaryCue, "#FFFFFF", false));
+        phone.addView(mockRow(step.secondaryCue, "#FFF6D8", false));
+
+        TextView note = text("Look for this part in the real app.", 16, false);
+        note.setTextColor(Color.parseColor("#3B4652"));
+        note.setGravity(Gravity.CENTER);
+        note.setPadding(0, dp(10), 0, 0);
+        phone.addView(note);
+
+        return phone;
+    }
+
+    private View mockRow(String value, String color, boolean bold) {
+        TextView row = text(value, 18, bold);
+        row.setTextColor(Color.parseColor("#1F2933"));
+        row.setGravity(Gravity.CENTER);
+        row.setBackgroundColor(Color.parseColor(color));
+        row.setPadding(dp(10), dp(12), dp(10), dp(12));
+        LinearLayout.LayoutParams params = matchWrap(0, 0, 0, 8);
+        row.setLayoutParams(params);
+        return row;
+    }
+
+    private void renderEmergencyNumbers() {
+        emergencyLayout.removeAllViews();
+
+        TextView heading = text("Emergency Contacts", 26, true);
+        heading.setTextColor(Color.parseColor("#1F2933"));
+        emergencyLayout.addView(heading);
+
+        TextView hint = text("Add family numbers here. Tap any number to call from the dialer.", 18, false);
+        hint.setTextColor(Color.parseColor("#3B4652"));
+        hint.setPadding(0, dp(6), 0, dp(12));
+        emergencyLayout.addView(hint);
+
+        Button call112 = primaryButton("Dial Emergency 112");
+        call112.setOnClickListener(v -> dialNumber(HELP_NUMBER));
+        emergencyLayout.addView(call112, matchWrap(0, 0, 0, 10));
+
+        for (String number : emergencyNumbers) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, 0, 0, dp(8));
+
+            Button callButton = secondaryButton(number);
+            callButton.setOnClickListener(v -> dialNumber(number));
+            row.addView(callButton, weightWrap(1, 0, 0, 8, 0));
+
+            Button removeButton = secondaryButton("Remove");
+            removeButton.setTextSize(18);
+            removeButton.setOnClickListener(v -> {
+                emergencyNumbers.remove(number);
+                saveEmergencyNumbers();
+                renderEmergencyNumbers();
+            });
+            row.addView(removeButton, new LinearLayout.LayoutParams(dp(118), LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            emergencyLayout.addView(row);
+        }
+
+        emergencyInput = new EditText(this);
+        emergencyInput.setTextSize(22);
+        emergencyInput.setSingleLine(true);
+        emergencyInput.setHint("Family phone number");
+        emergencyInput.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        emergencyInput.setPadding(dp(12), dp(10), dp(12), dp(10));
+        emergencyInput.setBackgroundResource(R.drawable.input_bg);
+        emergencyLayout.addView(emergencyInput, matchWrap(0, 4, 0, 10));
+
+        Button addButton = secondaryButton("Add Contact Number");
+        addButton.setOnClickListener(v -> addEmergencyNumber());
+        emergencyLayout.addView(addButton, matchWrap(0, 0, 0, 0));
+    }
+
+    private void addEmergencyNumber() {
+        String number = emergencyInput.getText().toString().trim();
+        if (number.length() < 5) {
+            Toast.makeText(this, "Please enter a valid phone number.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        emergencyNumbers.add(number);
+        saveEmergencyNumbers();
+        renderEmergencyNumbers();
+        Toast.makeText(this, "Emergency contact added.", Toast.LENGTH_SHORT).show();
     }
 
     private void openSelectedProvider() {
@@ -208,9 +335,36 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void callHelpNumber() {
-        Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + HELP_NUMBER));
+    private void dialNumber(String number) {
+        Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number));
         startActivity(callIntent);
+    }
+
+    private void loadEmergencyNumbers() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String saved = prefs.getString(KEY_EMERGENCY_NUMBERS, "");
+        emergencyNumbers.clear();
+        if (!saved.isEmpty()) {
+            emergencyNumbers.addAll(Arrays.asList(saved.split(",")));
+        }
+    }
+
+    private void saveEmergencyNumbers() {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .edit()
+                .putString(KEY_EMERGENCY_NUMBERS, joinEmergencyNumbers())
+                .apply();
+    }
+
+    private String joinEmergencyNumbers() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < emergencyNumbers.size(); i++) {
+            if (i > 0) {
+                builder.append(",");
+            }
+            builder.append(emergencyNumbers.get(i));
+        }
+        return builder.toString();
     }
 
     private Button button(String label) {
@@ -279,22 +433,30 @@ public class MainActivity extends Activity {
         final String packageName;
         final String deepLink;
         final String playStoreUrl;
+        final Step[] steps;
 
-        Provider(String name, String packageName, String deepLink, String playStoreUrl) {
+        Provider(String name, String packageName, String deepLink, String playStoreUrl, Step[] steps) {
             this.name = name;
             this.packageName = packageName;
             this.deepLink = deepLink;
             this.playStoreUrl = playStoreUrl;
+            this.steps = steps;
         }
     }
 
     private static class Step {
         final String heading;
         final String detail;
+        final String screenTitle;
+        final String primaryCue;
+        final String secondaryCue;
 
-        Step(String heading, String detail) {
+        Step(String heading, String detail, String screenTitle, String primaryCue, String secondaryCue) {
             this.heading = heading;
             this.detail = detail;
+            this.screenTitle = screenTitle;
+            this.primaryCue = primaryCue;
+            this.secondaryCue = secondaryCue;
         }
     }
 }
