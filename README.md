@@ -7,7 +7,8 @@ A simple Android app concept for elderly users who need calm, step-by-step help 
 - Shows very large text and touch targets.
 - Lets the user choose Rapido, Ola, or Uber.
 - Gives app-specific booking instructions one step at a time.
-- Shows simple screenshot-style guide pictures for each step.
+- Shows real app screenshots for each step when screenshot files are added.
+- Falls back to simple guide pictures when screenshot files are missing.
 - Opens the selected ride app if it is installed.
 - Falls back to Play Store if the ride app is missing.
 - Lets the user add family emergency numbers.
@@ -19,7 +20,17 @@ A simple Android app concept for elderly users who need calm, step-by-step help 
 - Big buttons and high-contrast text.
 - One active step is shown clearly, with the next action emphasized.
 - Emergency calls open in the dialer so the user confirms before calling.
-- The guide pictures are simplified mock screens, not exact third-party app screenshots, so they stay useful even when ride apps change their UI.
+- Real screenshots should be captured from your own device and checked often, because Rapido, Ola, and Uber can change their screens.
+
+## Add Real Screenshots
+
+Put `.png` screenshots in:
+
+`app/src/main/assets/screenshots`
+
+Use the exact file names listed in:
+
+`app/src/main/assets/screenshots/README.md`
 
 ## Open In Android Studio
 

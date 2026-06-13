@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -12,11 +14,14 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,31 +42,31 @@ public class MainActivity extends Activity {
 
     private final Provider[] providers = new Provider[] {
             new Provider("Rapido", "com.rapido.passenger", "rapido://home", "https://play.google.com/store/apps/details?id=com.rapido.passenger", new Step[] {
-                    new Step("Open Rapido", "Tap Open Selected App. Wait for the Rapido home screen.", "Home screen", "Search location", "Ride options below"),
-                    new Step("Check pickup", "Make sure the pickup point is your current place. If it is wrong, tap pickup and type the correct place.", "Pickup box", "Current location", "Change if wrong"),
-                    new Step("Enter destination", "Tap the destination box. Type the place name slowly and choose the correct result.", "Where to?", "Type destination", "Pick from list"),
-                    new Step("Choose Auto or Cab", "Select Auto for short trips. Choose Cab if you need more comfort.", "Ride choice", "Auto / Cab", "Fare shown here"),
-                    new Step("Confirm ride", "Check fare and pickup again. Tap Book only when both are correct.", "Confirm screen", "Book ride", "Check fare first"),
-                    new Step("Share details", "Read the vehicle number, driver name, and OTP. Share them with a family member.", "Driver details", "Vehicle number", "OTP"),
-                    new Step("Start safely", "Sit only in the matching vehicle. Tell the OTP after sitting inside.", "Vehicle arrives", "Match number", "Then share OTP")
+                    new Step("Open Rapido", "Tap Open Selected App. Wait for the Rapido home screen.", "Home screen", "Search location", "Ride options below", "rapido_01_open.png"),
+                    new Step("Check pickup", "Make sure the pickup point is your current place. If it is wrong, tap pickup and type the correct place.", "Pickup box", "Current location", "Change if wrong", "rapido_02_pickup.png"),
+                    new Step("Enter destination", "Tap the destination box. Type the place name slowly and choose the correct result.", "Where to?", "Type destination", "Pick from list", "rapido_03_destination.png"),
+                    new Step("Choose Auto or Cab", "Select Auto for short trips. Choose Cab if you need more comfort.", "Ride choice", "Auto / Cab", "Fare shown here", "rapido_04_choose_ride.png"),
+                    new Step("Confirm ride", "Check fare and pickup again. Tap Book only when both are correct.", "Confirm screen", "Book ride", "Check fare first", "rapido_05_confirm.png"),
+                    new Step("Share details", "Read the vehicle number, driver name, and OTP. Share them with a family member.", "Driver details", "Vehicle number", "OTP", "rapido_06_driver.png"),
+                    new Step("Start safely", "Sit only in the matching vehicle. Tell the OTP after sitting inside.", "Vehicle arrives", "Match number", "Then share OTP", "rapido_07_start.png")
             }),
             new Provider("Ola", "com.olacabs.customer", "olacabs://app", "https://play.google.com/store/apps/details?id=com.olacabs.customer", new Step[] {
-                    new Step("Open Ola", "Tap Open Selected App. Wait for Ola to show the booking screen.", "Ola home", "Pickup shown", "Destination box"),
-                    new Step("Check pickup", "Confirm the pickup address. If the marker is wrong, tap pickup and correct it.", "Pickup", "Your location", "Edit if needed"),
-                    new Step("Add destination", "Tap destination. Type the address or landmark, then choose the right result.", "Drop location", "Search place", "Select result"),
-                    new Step("Select ride", "Choose Auto, Mini, Prime, or another simple option. Check the fare before booking.", "Ride list", "Auto / Cab", "Fare shown"),
-                    new Step("Book the ride", "Tap Book after checking pickup, destination, and fare.", "Book screen", "Confirm booking", "Payment mode"),
-                    new Step("Check driver", "Look for driver name, vehicle number, and OTP. Share them with family.", "Driver card", "Vehicle number", "OTP"),
-                    new Step("Ride safely", "Match the vehicle number before entering. Give OTP only to the correct driver.", "Arrived", "Check vehicle", "Share OTP")
+                    new Step("Open Ola", "Tap Open Selected App. Wait for Ola to show the booking screen.", "Ola home", "Pickup shown", "Destination box", "ola_01_open.png"),
+                    new Step("Check pickup", "Confirm the pickup address. If the marker is wrong, tap pickup and correct it.", "Pickup", "Your location", "Edit if needed", "ola_02_pickup.png"),
+                    new Step("Add destination", "Tap destination. Type the address or landmark, then choose the right result.", "Drop location", "Search place", "Select result", "ola_03_destination.png"),
+                    new Step("Select ride", "Choose Auto, Mini, Prime, or another simple option. Check the fare before booking.", "Ride list", "Auto / Cab", "Fare shown", "ola_04_choose_ride.png"),
+                    new Step("Book the ride", "Tap Book after checking pickup, destination, and fare.", "Book screen", "Confirm booking", "Payment mode", "ola_05_confirm.png"),
+                    new Step("Check driver", "Look for driver name, vehicle number, and OTP. Share them with family.", "Driver card", "Vehicle number", "OTP", "ola_06_driver.png"),
+                    new Step("Ride safely", "Match the vehicle number before entering. Give OTP only to the correct driver.", "Arrived", "Check vehicle", "Share OTP", "ola_07_start.png")
             }),
             new Provider("Uber", "com.ubercab", "uber://", "https://play.google.com/store/apps/details?id=com.ubercab", new Step[] {
-                    new Step("Open Uber", "Tap Open Selected App. Wait for Uber to show the map and destination search.", "Uber home", "Where to?", "Map behind"),
-                    new Step("Enter destination", "Tap Where to? Type your destination and choose the correct place.", "Search", "Where to?", "Choose result"),
-                    new Step("Check pickup", "Check the pickup point on the map. Tap it if the location is wrong.", "Pickup pin", "Current place", "Change pickup"),
-                    new Step("Choose ride", "Pick Auto, Uber Go, or the option with the fare you are comfortable with.", "Choose ride", "Auto / Go", "Fare"),
-                    new Step("Confirm", "Check the fare and payment method. Tap Confirm only when everything is correct.", "Confirm screen", "Confirm ride", "Payment"),
-                    new Step("Read driver details", "Note driver name, vehicle number, and pickup point. Share them with family.", "Driver details", "Vehicle number", "Driver name"),
-                    new Step("Start safely", "Match the vehicle number before entering. Keep the phone with you during the ride.", "Vehicle arrives", "Match number", "Stay alert")
+                    new Step("Open Uber", "Tap Open Selected App. Wait for Uber to show the map and destination search.", "Uber home", "Where to?", "Map behind", "uber_01_open.png"),
+                    new Step("Enter destination", "Tap Where to? Type your destination and choose the correct place.", "Search", "Where to?", "Choose result", "uber_02_destination.png"),
+                    new Step("Check pickup", "Check the pickup point on the map. Tap it if the location is wrong.", "Pickup pin", "Current place", "Change pickup", "uber_03_pickup.png"),
+                    new Step("Choose ride", "Pick Auto, Uber Go, or the option with the fare you are comfortable with.", "Choose ride", "Auto / Go", "Fare", "uber_04_choose_ride.png"),
+                    new Step("Confirm", "Check the fare and payment method. Tap Confirm only when everything is correct.", "Confirm screen", "Confirm ride", "Payment", "uber_05_confirm.png"),
+                    new Step("Read driver details", "Note driver name, vehicle number, and pickup point. Share them with family.", "Driver details", "Vehicle number", "Driver name", "uber_06_driver.png"),
+                    new Step("Start safely", "Match the vehicle number before entering. Keep the phone with you during the ride.", "Vehicle arrives", "Match number", "Stay alert", "uber_07_start.png")
             })
     };
 
@@ -214,10 +219,35 @@ public class MainActivity extends Activity {
         card.addView(detail);
 
         if (active) {
-            card.addView(mockScreenshot(step), matchWrap(0, 12, 0, 0));
+            View screenshot = realScreenshot(step);
+            if (screenshot != null) {
+                card.addView(screenshot, matchWrap(0, 12, 0, 0));
+            } else {
+                card.addView(mockScreenshot(step), matchWrap(0, 12, 0, 0));
+            }
         }
 
         return card;
+    }
+
+    private View realScreenshot(Step step) {
+        try (InputStream stream = getAssets().open("screenshots/" + step.imageFileName)) {
+            Bitmap bitmap = BitmapFactory.decodeStream(stream);
+            if (bitmap == null) {
+                return null;
+            }
+
+            ImageView imageView = new ImageView(this);
+            imageView.setImageBitmap(bitmap);
+            imageView.setAdjustViewBounds(true);
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageView.setBackgroundResource(R.drawable.phone_mock_bg);
+            imageView.setPadding(dp(6), dp(6), dp(6), dp(6));
+            imageView.setContentDescription(step.heading + " screenshot");
+            return imageView;
+        } catch (IOException ignored) {
+            return null;
+        }
     }
 
     private View mockScreenshot(Step step) {
@@ -450,13 +480,15 @@ public class MainActivity extends Activity {
         final String screenTitle;
         final String primaryCue;
         final String secondaryCue;
+        final String imageFileName;
 
-        Step(String heading, String detail, String screenTitle, String primaryCue, String secondaryCue) {
+        Step(String heading, String detail, String screenTitle, String primaryCue, String secondaryCue, String imageFileName) {
             this.heading = heading;
             this.detail = detail;
             this.screenTitle = screenTitle;
             this.primaryCue = primaryCue;
             this.secondaryCue = secondaryCue;
+            this.imageFileName = imageFileName;
         }
     }
 }
